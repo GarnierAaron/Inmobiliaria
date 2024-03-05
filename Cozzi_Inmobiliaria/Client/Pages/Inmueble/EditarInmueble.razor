@@ -1,0 +1,89 @@
+﻿@page "/inmuebles/edit/{id:long}"
+@using Cozzi_Inmobiliaria.Server.Dto
+@using Cozzi_Inmobiliaria.Shared.Dto;
+@inject HttpClient Http
+@inject NavigationManager Navigation
+<h3>Modificar Inmueble</h3>
+@if (_inmueble == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <EditForm Model="@_inmueble" OnValidSubmit="Put">
+        <div class="form-group">
+            <label>Direccion: </label>
+            <InputText @bind-Value="_inmueble.Direccion" />
+        </div>
+        <div class="form-group">
+            <label for="_clientes">Cliente / Propietario</label>
+            <InputSelect class="form-select" @bind-Value="_inmueble.ClienteId">
+                @if (_clientes is not null)
+                {
+                    <option selected value="">Seleccionar cliente...</option>
+                    @foreach (var cliente in _clientes)
+                    {
+                        <option value="@cliente.Id">@cliente.Apellidos, @cliente.Nombres</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+        <div class="form-group">
+            <label>Habitaciones</label>
+            <InputNumber @bind-Value="_inmueble.Habitaciones" />
+        </div>
+        <div class="form-group">
+            <label>Baños</label>
+            <InputNumber @bind-Value="_inmueble.Baños" />
+        </div>
+        <div class="form-group">
+            <label>Garages</label>
+            <InputNumber @bind-Value="_inmueble.Garages" />
+        </div>
+        <div class="form-group">
+            <label>Patios</label>
+            <InputNumber @bind-Value="_inmueble.Patios" />
+        </div>
+        <div class="form-group">
+            <label>Pisos</label>
+            <InputNumber @bind-Value="_inmueble.Pisos" />
+        </div>
+        <div class="form-group">
+            <label>Metros cuadrados</label>
+            <InputNumber @bind-Value="_inmueble.MetrosCuadrados" />
+        </div>
+        <div class="form-group">
+            <label>Propio</label>
+            <InputCheckbox @bind-Value="_inmueble.Propio" />
+        </div>
+        <div class="form-group">
+            <label>Nota: </label>
+            <InputText @bind-Value="_inmueble.Nota" />
+        </div>
+        <div class="form-group">
+            <input type="submit" class="btn btn-success" value="Editar" />
+        </div>
+    </EditForm>
+    <button class="btn btn-primary" @onclick="Volver">Volver</button>
+}
+@code {
+    [Parameter]
+    public long Id { get; set; }
+    private InmuebleRequestDto _inmueble = null; 
+    private List<ClienteResponseDto> _clientes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+        _inmueble = await Http.GetFromJsonAsync<InmuebleRequestDto>($"/api/Inmuebles/{Id}");
+    }
+    private async Task Put()
+    {
+        await Http.PutAsJsonAsync<InmuebleRequestDto>($"/api/Inmuebles/{_inmueble.Id}", _inmueble);
+        Volver();
+    }
+    private void Volver()
+    {
+        Navigation.NavigateTo("/inmuebles");
+    }
+}

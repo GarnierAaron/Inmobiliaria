@@ -1,0 +1,95 @@
+﻿@page "/clientes"
+@using Cozzi_Inmobiliaria.Shared.Dto;
+@inject HttpClient Http
+@inject NavigationManager Navigation
+<h3>Clientes</h3>
+@if (_clientes == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>                
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>CuitCuil</th>
+                <th>Telefono</th>              
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cliente in _clientes)
+            {
+                <tr>                    
+                    <td>@cliente.Nombres</td>
+                    <td>@cliente.Apellidos</td>
+                    <td>@cliente.CuitCuil</td>
+                    <td>@cliente.Telefono</td>
+                    <td>
+                        <i class="material-icons text-warning btn" aria-hidden="true" @onclick="(() => Edit(cliente.Id))">edit</i>
+                        <i class="material-icons text-danger btn" aria-hidden="true" @onclick="(() => MostrarModal(cliente))">delete</i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>    
+    <div>
+        <button class="btn btn-success" @onclick="Create">Nuevo Cliente</button>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" style="@modalStyle">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Eliminar Cliente</h1>
+                </div>
+                <div class="modal-body">
+                    ¿Esta seguro que desea borrar el cliente?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" @onclick="Delete">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private string modalStyle => mostrarModal ? "display: block;" : "display: none;";
+    private ClienteResponseDto clienteModal;
+    private bool mostrarModal = false;
+    private List<ClienteResponseDto> _clientes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+    }
+    private async Task Delete()
+    {
+        await Http.DeleteAsync($"/api/Clientes/{clienteModal.Id}");
+        CerrarModal();
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+        StateHasChanged();
+    }
+    private void Edit(long id)
+    {
+        Navigation.NavigateTo($"/clientes/edit/{id}");
+    }
+    private void Create()
+    {
+        Navigation.NavigateTo("/clientes/create");
+    }
+
+    private void MostrarModal(ClienteResponseDto cliente)
+    {
+        clienteModal = cliente;
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+}

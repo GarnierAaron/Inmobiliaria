@@ -1,0 +1,233 @@
+﻿@page "/inmuebles"
+@using Cozzi_Inmobiliaria.Server.Dto
+@using Cozzi_Inmobiliaria.Shared.Dto;
+@inject HttpClient Http
+@inject NavigationManager Navigation
+<h3>Inmuebles</h3>
+@if (_inmuebles == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>                
+                <th>Direccion</th>
+                <th>Propietario</th>
+                <th>Habitaciones</th>
+                <th>Baños</th>
+                <th>Disponible</th>                
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inmueble in _inmuebles)
+            {
+                <tr>                    
+                    <td>@inmueble.Direccion</td>
+                    <td>@inmueble.Propietario</td>
+                    <td>@inmueble.Habitaciones.ToString()</td>
+                    <td>@inmueble.Baños.ToString()</td>
+                    <td>@inmueble.Disponible</td>
+                    <td>
+                        <i class="material-icons text-primary btn" aria-hidden="true" @onclick="(() => GetById(inmueble.Id))">visibility</i>
+                        <i class="material-icons text-warning btn" aria-hidden="true" @onclick="(() => Edit(inmueble.Id))">edit</i>
+                        <i class="material-icons text-danger btn" aria-hidden="true" @onclick="(() => MostrarModalEliminar(inmueble))">delete</i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>    
+    <div>
+        <button class="btn btn-success" @onclick="Create">Nuevo Inmueble</button>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" style="@modalStyleEliminar">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Eliminar Inmueble</h1>
+                </div>
+                <div class="modal-body">
+                    ¿Esta seguro que desea borrar este inmueble?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" @onclick="Delete">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" style="@modalStyleInmueble">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    @if (editarInmueble)
+                    {
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Editar Inmueble</h1>
+                    }
+                    else @if (crearInmueble)
+                    {
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Crear Inmueble</h1>
+                    }
+                    else
+                    {
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Ver Inmueble</h1>
+                    }                               
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@_inmueble" OnValidSubmit="ProcesarModalInmueble">
+                        <div class="form-group">
+                            <label>Direccion: </label>
+                            <InputText @bind-Value="_inmueble.Direccion" @attributes="ReadOnly()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="_clientes">Cliente / Propietario</label>
+                            <InputSelect class="form-select" @bind-Value="_inmueble.ClienteId" @attributes="ReadOnly()">
+                                @if (_clientes is not null)
+                                {
+                                    <option selected value="">Seleccionar cliente...</option>
+                                    @foreach (var cliente in _clientes)
+                                    {
+                                        <option value="@cliente.Id">@cliente.Apellidos, @cliente.Nombres</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="form-group">
+                            <label>Habitaciones</label>
+                            <InputNumber @bind-Value="_inmueble.Habitaciones" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Baños</label>
+                            <InputNumber @bind-Value="_inmueble.Baños" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Garages</label>
+                            <InputNumber @bind-Value="_inmueble.Garages" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Patios</label>
+                            <InputNumber @bind-Value="_inmueble.Patios" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Pisos</label>
+                            <InputNumber @bind-Value="_inmueble.Pisos" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Metros cuadrados</label>
+                            <InputNumber @bind-Value="_inmueble.MetrosCuadrados" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Propio</label>
+                            <InputCheckbox @bind-Value="_inmueble.Propio" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            <label>Nota: </label>
+                            <InputText @bind-Value="_inmueble.Nota" @attributes="_readOnly" />
+                        </div>
+                        <div class="form-group">
+                            @if(editarInmueble)
+                            {
+                                <input type="submit" class="btn btn-success btn-primary" value="Editar" />
+
+                            } 
+                            else @if (crearInmueble)
+                            {
+                                <input type="submit" class="btn btn-success btn-primary" value="Crear" />
+                            }     
+                            else
+                            {
+                                <input type="submit" class="btn btn-success btn-primary" value="Confirmar" />
+                            }
+                            <input class="btn btn-danger btn-secondary" @onclick="CerrarModal" value="Cerrar" />
+                        </div>
+                    </EditForm>
+                </div>                
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private string modalStyleEliminar => mostrarModalEliminar ? "display: block;" : "display: none;";
+    private bool mostrarModalEliminar = false;
+    private string modalStyleInmueble => mostrarModalInmueble ? "display: block;" : "display: none;";
+    private bool mostrarModalInmueble = false;
+    private bool crearInmueble = false;
+    private bool editarInmueble = false;
+    private bool mostrarInmueble = false;
+    private Dictionary<string, object> _readOnly;
+
+    private InmuebleResponseDto inmuebleModal;    
+    private List<InmuebleResponseDto> _inmuebles;
+
+    private InmuebleRequestDto _inmueble = new();
+    private List<ClienteResponseDto> _clientes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _inmuebles = await Http.GetFromJsonAsync<List<InmuebleResponseDto>>("/api/Inmuebles");
+    }
+
+    private async Task GetById(long id)
+    {
+        _readOnly = ReadOnly();
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+        _inmueble = await Http.GetFromJsonAsync<InmuebleRequestDto>($"/api/Inmuebles/{id}");
+        mostrarInmueble = true;
+        mostrarModalInmueble = true;
+    }
+    private async Task Edit(long id)
+    {
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+        _inmueble = await Http.GetFromJsonAsync<InmuebleRequestDto>($"/api/Inmuebles/{id}");
+        editarInmueble = true;
+        mostrarModalInmueble = true;
+    }
+    private async Task Create()
+    {
+        _clientes = await Http.GetFromJsonAsync<List<ClienteResponseDto>>("/api/Clientes");
+        crearInmueble = true;
+        mostrarModalInmueble = true;
+    }
+    private async Task ProcesarModalInmueble()
+    {
+        if (crearInmueble) await Http.PostAsJsonAsync<InmuebleRequestDto>("/api/Inmuebles/", _inmueble);
+        if (editarInmueble) await Http.PutAsJsonAsync<InmuebleRequestDto>($"/api/Inmuebles/{_inmueble.Id}", _inmueble);
+
+        crearInmueble = false;
+        editarInmueble = false;
+        mostrarInmueble = false;
+        await CerrarModal();
+    }
+
+    private async Task Delete()
+    {
+        await Http.DeleteAsync($"/api/Inmuebles/{inmuebleModal.Id}");
+        await CerrarModal();
+
+    }
+    private void MostrarModalEliminar(InmuebleResponseDto inmueble)
+    {
+        inmuebleModal = inmueble;
+        mostrarModalEliminar = true;
+    }
+
+    private async Task CerrarModal()
+    {
+        _readOnly = null;
+        mostrarModalInmueble = false;
+        mostrarModalEliminar = false;
+        _inmuebles = await Http.GetFromJsonAsync<List<InmuebleResponseDto>>("/api/Inmuebles");
+        StateHasChanged();
+    }
+
+    private Dictionary<string, object> ReadOnly()
+    {
+        var dict = new Dictionary<string, object>();
+        if (mostrarInmueble) dict.Add("readonly", "readonly");
+        return dict;
+    }
+}

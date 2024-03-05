@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\Cozzi_Inmobiliaria.Server.props" />
+</Project>
